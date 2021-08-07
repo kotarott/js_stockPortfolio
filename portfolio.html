@@ -1,0 +1,502 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Portfolio</title>
+    <!-- jQuery -->
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.4.1/jquery.min.js"></script>
+    <!-- CSS -->
+    <link rel="stylesheet" href="css/style.css">
+    <!-- chart.js -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/2.9.4/Chart.js"></script>
+    <script src="https://unpkg.com/chartjs-plugin-colorschemes"></script>
+    <!-- axios -->
+    <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
+    <!-- The core Firebase JS SDK is always required and must be listed first -->
+    <script src="https://www.gstatic.com/firebasejs/ui/4.6.1/firebase-ui-auth.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.3.0/firebase.js"></script>
+    <link type="text/css" rel="stylesheet" href="https://www.gstatic.com/firebasejs/ui/4.6.1/firebase-ui-auth.css"/>
+    <!-- TODO: Add SDKs for Firebase products that you want to use
+     https://firebase.google.com/docs/web/setup#available-libraries -->
+     <!-- fontawesome -->
+    <script src="https://kit.fontawesome.com/d5cb5f3e7e.js" crossorigin="anonymous"></script>
+
+</head>
+<body>
+
+<!-- html -->
+<header>
+    My Portfolio
+    <i class="fas fa-sign-out-alt" id="logout"></i>
+</header>
+
+<!-- popup -->
+<div class="popup" id="js-popup">
+    <div class="popup-inner">
+      <div id="ui_container"></div>
+    </div>
+    <div class="black-background" id="js-black-bg"></div>
+</div>
+
+<main>
+    <div class="wrapper">
+        <div class="above-wrapper">
+            <div class="above__left">
+                <div class="search-wrapper">
+                    <input type="text" id="keyword">
+                    <button id="search">検索</button>
+                </div>
+                <div class="search__result">
+                    <table class="results-wrapper">
+                        <tr>
+                            <th>Name</th>
+                            <th>Region</th>
+                            <th>Currency</th>
+                        </tr>
+                    </table>
+                </div>
+            </div>
+            <div class="above__right">
+                <div class="input-wrapper">
+                    <div>Ticker：</div>
+                    <div id="ticker"></div>
+                    <div>Weight：</div>
+                    <input type="number" step="1" id="weight">
+                    <div id="i__name" class="hidden"></div>
+                    <div id="i__currency" class="hidden"></div>
+                    <button id="input">入力</button>
+                    <input type="date" id="start">
+                    <div>~</div>
+                    <input type="date" id="end">
+                    <button id="resetDate">更新</button>
+                </div>
+                <table class="port-table" id="port-table">
+                    <tr>    
+                        <th>Ticker</th>
+                        <th>Name</th>
+                        <th>Price</th>
+                        <th>Currency</th>
+                        <th>Weight</th>
+                        <th>Change(%)</th>
+                    </tr>
+                </table>
+            </div>
+        </div>
+        <div class="below-wrapper">
+            <div class="below__left">
+                <canvas id="port" height="270" width="420"></canvas>
+            </div>
+            <div class="below__right">
+                <canvas id="series" height="270" width="780"></canvas>
+            </div>
+        </div>
+            
+    </div>
+</main>
+
+<script>
+/* ----------------------
+    firebaseお約束
+ * --------------------*/
+// Your web app's Firebase configuration
+var firebaseConfig = {
+  apiKey: "AIzaSyCPvihKG8cKPGs-Q9-dVRs8pubpuLKut84",
+  authDomain: "js-04-ddbbf.firebaseapp.com",
+  projectId: "js-04-ddbbf",
+  storageBucket: "js-04-ddbbf.appspot.com",
+  messagingSenderId: "344500411072",
+  appId: "1:344500411072:web:efb8b70865e42d3bda6b25"
+};
+// Initialize Firebase
+firebase.initializeApp(firebaseConfig);
+
+
+/* --------------------------------
+   ログイン処理
+ * -------------------------------*/
+ let userall, name, email, photoUrl, uid, emailVerified;
+
+ // mailログイン firebaseUI
+let uiConfig = {
+  callbacks: {
+    signInSuccessWithAuthResult: function(authResult, redirectUrl) {
+      return true;
+    },
+  },
+  signInFlow: 'popup',
+  signInSuccessUrl: './portfolio.html',
+  signInOptions: [
+    firebase.auth.EmailAuthProvider.PROVIDER_ID,
+  ],
+  tosUrl: './portfolio.html',
+};
+
+let ui = new firebaseui.auth.AuthUI(firebase.auth());
+ui.start('#ui_container', uiConfig);
+
+// login判定＋Popup表示
+firebase.auth().onAuthStateChanged(function(user) {
+  if(user) {
+    console.log('success');
+
+    // ユーザー情報
+    userall = user;
+    name = user.displayName;
+    email = user.email;
+    // photoUrl = user.photoURL;
+    // emailVerified = user.emailVerified;
+    uid = user.uid;
+
+    firebase.database().ref(uid + '/Port').once('value', function(snapshot) {
+        snapshot.forEach(function(data) {
+            const ticker = data.key;
+            const name = data.val().name;
+            const price = data.val().price;
+            const currency = data.val().currency;
+            const weight = data.val().weight;
+
+            const h = '<tr class="btn-list"><td class="l__ticker">' + ticker + '</td><td>' + name + '</td><td>' + price + '</td><td>' + currency + '</td><td class="l__weight">' + weight + '</td><td class="change"></tr>'
+            $('.port-table').append(h);
+
+        })
+    })
+
+    } else {
+    console.log('failure');
+
+    // 登録フォームpopup
+    let popup = document.getElementById('js-popup');
+    if(!popup) return;
+    popup.classList.add('is-show');
+  }
+})
+
+
+/* --------------------------------
+   ログアウト処理
+ * -------------------------------*/
+ $('#logout').on('click', function() {
+    firebase.auth().signOut();
+    $('#output').remove();
+    $('h1').html('Chatroom')
+    alert('ログアウトしました');
+});
+
+
+/* ----------------------
+    portfolio部分
+ * --------------------*/
+// portへの追加
+ $('#input').on('click', function() {
+    const ticker = $('#ticker').text();
+    getSeriesData(ticker);
+})
+
+// tickerの検索
+$('#search').on('click', function() {
+    const keyword = $('#keyword').val();
+    let results;
+
+    // remove
+    $('.btn__result').remove();
+
+    if(keyword) {
+        searchTicker(keyword);
+    }
+
+})
+
+// tickerの追加
+$(document).on('click', '.btn__result', function() {
+    const ticker = $(this).children('.hidden').text();
+    const name = $(this).children('.r__name').text();
+    const currency = $(this).children('.r__currency').text();
+    $('#ticker').text(ticker);
+    $('#i__name').text(name);
+    $('#i__currency').text(currency);
+})
+
+// ポートの削除
+$(document).on('click', '.btn-list', function() {
+    const ticker = $(this).children('.l__ticker').text();
+    if(window.confirm(ticker + 'を削除しますか？')) {
+        $(this).remove();
+        firebase.database().ref(uid +'/Port/' + ticker).remove()
+    }
+})
+
+// 収益率計算
+$('#resetDate').on('click', function() {
+    const start = $('#start').val();
+    const end = $('#end').val();
+
+    let returnSim = {};
+
+    let table = document.getElementById('port-table');
+    let len_rows = table.rows.length;
+    for (let i = 1; i < len_rows; i++) {
+        const ticker = table.rows[i].cells[0].innerText;
+        const weight = table.rows[i].cells[4].innerText;
+        // 収益率の計算
+        culcReturn(ticker, start, end).then(function(value) {
+            table.rows[i].cells[5].innerText = Math.round(value * 100) / 100
+            console.log(value)
+        })
+        // portの更新
+        chart(i-1, ticker, weight);
+
+        // シミュレーション計算
+        culcSimulation(ticker, start, end, weight, returnSim)
+    }
+    // keys, values の取得が上手くいかない
+    const keys = Object.keys(returnSim);
+    let values = Object.values(returnSim);
+    // linechart(keys, values);
+    console.log(returnSim);
+    console.log(keys);
+    // linechart(keys, values)
+})
+
+/* ----------------------
+    quandl API
+ * --------------------*/
+// ヒストリカルデータ取得
+function getSeriesData(ticker) {
+    const options = {
+    method: 'GET',
+    url: 'https://alpha-vantage.p.rapidapi.com/query',
+    params: {
+        function: 'TIME_SERIES_DAILY',
+        symbol: ticker,
+        outputsize: 'full',
+        datatype: 'json'
+    },
+    headers: {
+        'x-rapidapi-key': 'b6dcd6d7c2msha6630c601307e17p106be3jsn879d06b47ef4',
+        'x-rapidapi-host': 'alpha-vantage.p.rapidapi.com'
+    }
+    };
+
+    axios.request(options).then(function (response) {
+        const results = response.data;
+        latestKey = Object.keys(results['Time Series (Daily)'])[0];
+        latestData = results['Time Series (Daily)'][latestKey];
+        addList(latestData['4. close']);
+        culcChange(results['Time Series (Daily)']);
+    }).catch(function (error) {
+        // alert('error');
+        console.log(error)
+    });
+}
+
+// ticker検索
+function searchTicker(keyword) {
+    const options = {
+    method: 'GET',
+    url: 'https://alpha-vantage.p.rapidapi.com/query',
+    params: {keywords: keyword, function: 'SYMBOL_SEARCH', datatype: 'json'},
+    headers: {
+        'x-rapidapi-key': 'b6dcd6d7c2msha6630c601307e17p106be3jsn879d06b47ef4',
+        'x-rapidapi-host': 'alpha-vantage.p.rapidapi.com'
+    }
+    };
+
+    axios.request(options).then(function (response) {
+        // response.data.bestMatchesを渡す
+        const results = response.data.bestMatches
+        displayResults(results);
+    }).catch(function (error) {
+        console.error(error);
+        alert('Error')
+    });
+}
+
+
+/* ----------------------
+    関数
+ * --------------------*/
+// searchの表示
+function displayResults(results) {
+    for(let i = 0; i < results.length; i++) {
+        const result = results[i]
+        const name = result['2. name']
+        const region = result['4. region']
+        const currency = result['8. currency']
+        const type = result['3. type']
+        const ticker = result['1. symbol']
+
+        if(type === 'Equity') {
+            const h = '<tr class="btn__result"><td class="r__name">' + name + '</td><td>' + region + '</td><td class="r__currency">' + currency + '</td><td class="hidden">'+ ticker + '</td></tr>'
+            $('.results-wrapper').append(h)
+        }
+    }
+}
+
+// 変化率計算
+function culcChange(seriesData) {
+    let old_price = 0;
+    let new_price = 0;
+    const changeList = {}
+    const keys = Object.keys(seriesData)
+    const reverse_keys = keys.reverse();
+    const ticker = $('#ticker').text();
+
+    for(let i = 0; i < reverse_keys.length; i++) {
+        const key = reverse_keys[i]
+        const data = seriesData[key]
+        old_price = new_price
+        new_price = parseFloat(data['4. close'])
+        let culcResult = new_price / old_price - 1
+        if(!isFinite(culcResult)) {
+            culcResult = 0;
+        }
+        changeList[key] = culcResult * 100
+    }
+    firebase.database().ref(uid + '/List/' + ticker).set(changeList);
+}
+
+// list追加
+function addList(price) {
+    const ticker = $('#ticker').text();
+    const name = $('#i__name').text();
+    const currency = $('#i__currency').text();
+    const weight = $('#weight').val();
+    console.log(price)
+    
+    const h = '<tr class="btn-list"><td class="l__ticker">' + ticker + '</td><td>' + name + '</td><td>' + price + '</td><td>' + currency + '</td><td class="l__weight">' + weight + '</td><td class="change"></tr>'
+    $('.port-table').append(h);
+
+    const msg = {
+        ticker,
+        name,
+        price,
+        currency,
+        weight,
+    }
+
+    firebase.database().ref(uid + '/Port/' + ticker).set(msg);
+}
+
+// 期間収益率の算出
+function culcReturn(ticker, start, end) {
+    return new Promise((resolve) => {
+        let dailyReturn;
+        firebase.database().ref(uid + '/List/' + ticker).once('value', function(data){
+            dailyReturn = data.val()
+            let return_cul = 1;
+            for (let key in dailyReturn) {
+                if(key > start && key <= end) {
+                    return_cul *= (1 + dailyReturn[key] / 100)
+                }
+            }
+            resolve((return_cul - 1) * 100);
+        })
+    })
+}
+
+// 収益シミュレーション
+function culcSimulation(ticker, start, end, weight, returnSim) {
+    return new Promise((resolve) => {
+        firebase.database().ref(uid + '/List/' + ticker).once('value', function(data) {
+            const dailyReturn = data.val();
+            let i = 0;
+            let return_cul = weight;
+
+            for(let key in dailyReturn) {
+
+                if(key >= start && key <= end) {
+                    if(!returnSim[key]) {
+                        returnSim[key] = 0;
+                    }
+                    if(i === 0) {
+                        let x = parseFloat(returnSim[key]);
+                        x += parseFloat(return_cul);
+                        returnSim[key] = x;
+                        i += 1;
+                    } else {
+                        let x = parseFloat(returnSim[key]);
+                        return_cul *= (1 + dailyReturn[key] / 100);
+                        x += parseFloat(return_cul);
+                        returnSim[key] = x;
+                    }
+                }
+            }
+        })
+        resolve();
+    })
+}
+
+
+/* ----------------------
+    Chart
+ * --------------------*/
+// port
+let ctx = document.getElementById("port").getContext('2d');
+var port = new Chart(ctx, {
+  type: 'pie',
+  data: {
+    labels: [],
+    datasets: [{
+      data: []
+    }]
+  },
+  options: {
+    title: {
+      display: true,
+      text: 'MyPortfolio'
+    },
+    plugins: {  
+        colorschemes: {
+            scheme: 'brewer.Paired12'
+        }
+    }
+  }
+});
+
+// portデータの更新
+function chart(num, ticker, weight) {
+  port.data.labels[num] = ticker;
+  port.data.datasets[0].data[num] = weight;
+  port.update();
+};
+
+// series
+let ctx2 = document.getElementById("series");
+var series = new Chart(ctx2, {
+    type: 'line',
+    data: {
+      labels: [],
+      datasets: [
+        {
+          data: [],
+        }
+      ],
+    },
+    options: {
+      title: {
+        display: true,
+        text: 'MyPortfolio'
+      },
+      plugins: {
+        colorschemes: {
+            scheme: 'brewer.Paired12'
+        }
+      }
+    }
+});
+
+// seriesデータの更新
+function linechart(date, seriesData) {
+  series.data.labels = date;
+  series.data.datasets[0].data = seriesData;
+  series.update();
+};
+
+
+</script>
+    
+</body>
+</html>

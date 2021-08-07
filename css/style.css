@@ -1,0 +1,191 @@
+html {
+    width: 1200px;
+    font-size: 62.5%;
+    margin: auto;
+    height: 100%;
+}
+
+body {
+    width: 100%;
+    margin: 0 0;
+}
+
+header {
+    /* position: fixed; */
+    background-color: gray;
+    text-align: center;
+    vertical-align: middle;
+    width: 100%;
+    font-size: 2.4rem;
+    color: #ffffff;
+    /* left: 0; */
+    /* top: 0; */
+}
+
+.wrapper {
+    height: 100%;
+}
+
+#logout {
+    /* position: fixed;
+    top: 0;
+    right: 0; */
+    padding: 0.5rem;
+    cursor: pointer;
+    margin-right: 0;
+}
+
+#logout:hover {
+    transform: scale(1.1, 1.1);
+    cursor: pointer;
+}
+
+
+/* --------------------
+    popup setting
+ * --------------------*/
+ .popup {
+    position: fixed;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 9999;
+    opacity: 0;
+    visibility: hidden;
+    transition: .6s;
+}
+
+.popup.is-show {
+    opacity: 1;
+    visibility: visible;
+}
+
+.popup-inner {
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    transform: translate(-50%,-50%);
+    width: auto;
+    padding: 0;
+    background-color: #fff;
+    z-index: 2;
+}
+
+.black-background {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0,0,0,.8);
+    z-index: 1;
+}
+
+
+/* -------------------------
+    above setting
+ * -----------------------*/
+.above-wrapper {
+    display: flex;
+    height: 260px;
+}
+
+.above__left {
+    display: block;
+    width: 420px;
+    height: 100%;
+}
+
+.above__right {
+    display: block;
+    width: 780px;
+    height: 100%;
+    padding: 0.5rem 1rem;
+}
+
+/* search setting */
+.search-wrapper {
+    display: flex;
+    margin: 0.5rem 8rem;
+    justify-content: space-between;
+}
+
+.search__result {
+    margin: 0.5rem 3rem;
+}
+
+.results-wrapper {
+    width: 100%;
+}
+
+th {
+    border-bottom: solid 1px black;
+}
+
+td {
+    width: 100%;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    text-align: center;
+}
+
+.btn__result {
+    cursor: pointer;
+}
+
+.btn__result:hover {
+    background-color: #FFCCFF;
+}
+
+.hidden {
+    display: none;
+}
+
+/* portfoli setting */
+.input-wrapper {
+    display: flex;
+    /* padding-right: 20rem; */
+    font-size: 1.6rem;
+    justify-content: left;
+    margin: 0 0 0.5rem 0;
+}
+
+.port-table {
+    width: 100%;
+    /* overflow: auto; */
+    table-layout: fixed;
+}
+
+#ticker {
+    background-color: #ffccff;
+    width: 8rem;
+}
+
+.input__date {
+    display: flex;
+}
+
+.btn-list {
+    cursor: pointer;
+}
+
+.btn-list:hover {
+    background-color: #FFCCFF;
+}
+
+
+/* -------------------------
+    below setting
+ * -----------------------*/
+.below-wrapper {
+    display: flex;
+}
+
+.below__left {
+    display: block;
+}
+
+.below__right {
+    display: block;
+}
